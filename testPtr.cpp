@@ -32,18 +32,26 @@ class Particle {
 };
 
 int main() {
-    Particle p1, p2;
-    p1.x[0] = 2;
-    p2.x[0] = 3;
-    cout << p1.x << endl;
-    cout << p1.x[0] << endl;
-    cout << p2.x << endl;
-    cout << p2.x[0] << endl;
-    *(p1.x + 1) = 9;
-    cout << p1.x + 1 << endl;
-    cout << p1.x[1] << endl;
-    cout << p2.x << endl;
-    cout << p2.x[0] << endl;
+
+    double *a = (double *)malloc(sizeof(double));
+    //*a = 5;
+    cout << *a << endl;
+
+
+
+
+    // Particle p1, p2;
+    // p1.x[0] = 2;
+    // p2.x[0] = 3;
+    // cout << p1.x << endl;
+    // cout << p1.x[0] << endl;
+    // cout << p2.x << endl;
+    // cout << p2.x[0] << endl;
+    // *(p1.x + 1) = 9;
+    // cout << p1.x + 1 << endl;
+    // cout << p1.x[1] << endl;
+    // cout << p2.x << endl;
+    // cout << p2.x[0] << endl;
 
     return 0;
 }

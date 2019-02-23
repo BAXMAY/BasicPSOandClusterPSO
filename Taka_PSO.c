@@ -20,9 +20,9 @@ typedef struct {
 */
 
 /* Number of particles */
-#define Nparticles	50
+#define Nparticles	30
 /* Maximum number of iterations */
-#define T_MAX		1000
+#define T_MAX		100000
 /* The value of inertia weight at t=0 (W_0) and t=T_MAX (W_T) */
 #define W_0		0.9
 #define W_T		0.4
@@ -44,11 +44,16 @@ typedef struct {
 /* The following is the function of Sum_i (x_i-1)^2 */
 void Evaluate(Particle P)
 {
-	int i;
+	int i, j; 
+	double temp = 0;
 
 	P->f=0.0;
-	for(i=0; i<Nvariables; i++)
-		P->f+=(P->x[i]-1)*(P->x[i]-1);
+	for(i=0; i<Nvariables; i++) {
+		for(j = 0; j < i; j++) {
+			temp += P->x[j];
+		}
+		P->f += temp * temp;
+	}
 }
 
 /* update pbest */
@@ -70,7 +75,7 @@ int Initialize(Particle P, int n)
 	G=0;
 	for(i=0; i<n; i++) {
 		for(j=0; j<Nvariables; j++) {
-			P[i].x[j]= Rand();	/* problem dependent */
+			P[i].x[j]= -5.12 + 10.24 * Rand();	/* problem dependent */
 			P[i].v[j]=0.0;		/* problem dependent */
 		}
 		Evaluate(&P[i]);
