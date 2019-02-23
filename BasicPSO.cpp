@@ -3,7 +3,7 @@
 #include <limits>
 using namespace std;
 
-#define Nparticles 1000
+#define Nparticles 30
 #define T_MAX      1000
 #define NFC_MAX    100000
 #define W_0        0.9
@@ -11,7 +11,7 @@ using namespace std;
 #define MAX_V      2.0
 #define c1         2.0      
 #define c2         2.0
-#define Nvariables 30
+#define Nvariables 5
 
 #define Rand()     ((double)rand()/RAND_MAX);
 
@@ -114,8 +114,8 @@ Swarm::~Swarm() {
 
 class PSO {
     private:
+        int nfc;
         double w;
-        double nfc;
         double *maxV; 
     public:
         Swarm swarm;
@@ -149,7 +149,6 @@ void PSO::evolution() {
         calculateVMax();
         particleMovement();  
         evaluateSwarm();
-        
         w -= dw;     
     }
 
@@ -160,7 +159,7 @@ void PSO::initialize() {
 
     for(int i = 0; i < Nparticles; i++) {
         for(int j = 0; j < Nvariables; j++) {
-            double x = 100 * Rand();
+            double x = Rand();
             swarm.setParticleXV(i, j, x, 0.0);
         }
         evaluate(i);
@@ -192,6 +191,15 @@ void PSO::evaluateSwarm() {
     for(int i = 0; i < Nparticles; i++) {
         evaluate(i);    
         nfc++;
+
+        if (nfc % 5000 == 0) {
+        Particle best = swarm.getParticleValue(swarm.getGbest());
+        printf("%d : ", nfc);
+        for (int j = 0; j < Nvariables; j++)
+            printf("%f ", best.xBest[j]);
+        printf(" = %g\n", best.pBest);
+        //cout << "PSO SPHERE nfc" << nfc << " \tbestfit " << best.pBest << "\n";
+    }
     }
 
     for(int n = 0; n < Nparticles; n++) {
@@ -205,8 +213,6 @@ void PSO::evaluateSwarm() {
             }
         }
     }
-
-    cout << "PSO SPHERE nfc" << nfc << " \tbestfit " << swarm.getGbestValue() << "\n";
 }
 
 void PSO::updateBest(int i) {
@@ -230,7 +236,6 @@ void PSO::calculateVMax() {
     }
 }
 
-///
 void PSO::particleMovement() {
     int n, d;
 

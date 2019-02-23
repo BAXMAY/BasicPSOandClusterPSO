@@ -70,7 +70,7 @@ int Initialize(Particle P, int n)
 	G=0;
 	for(i=0; i<n; i++) {
 		for(j=0; j<Nvariables; j++) {
-			P[i].x[j]=Rand();	/* problem dependent */
+			P[i].x[j]= Rand();	/* problem dependent */
 			P[i].v[j]=0.0;		/* problem dependent */
 		}
 		Evaluate(&P[i]);
