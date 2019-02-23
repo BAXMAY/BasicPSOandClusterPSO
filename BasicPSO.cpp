@@ -5,13 +5,13 @@ using namespace std;
 
 #define Nparticles 30
 #define T_MAX      1000
-#define NFC_MAX    100000
+#define NFC_MAX    1000000
 #define W_0        0.9
 #define W_T        0.4
 #define MAX_V      2.0
 #define c1         2.0      
 #define c2         2.0
-#define Nvariables 5
+#define Nvariables 30
 
 #define Rand()     ((double)rand()/RAND_MAX);
 
@@ -80,8 +80,8 @@ void Swarm::setGBestValue(double gBestValue) {
 }
 
 void Swarm::setParticleXV(int i, int j, double x, double v) {
-    P[i].x[j] = x;
-    P[i].v[j] = v;
+    if (x != NULL) P[i].x[j] = x;
+    if (v != NULL) P[i].v[j] = v;
 }
 
 void Swarm::setParticleFitness(int i, double fit) {
@@ -159,8 +159,10 @@ void PSO::initialize() {
 
     for(int i = 0; i < Nparticles; i++) {
         for(int j = 0; j < Nvariables; j++) {
-            double x = Rand();
-            swarm.setParticleXV(i, j, x, 0.0);
+            double x = -5.12 + 10.24 * Rand();
+            //double x = Rand();
+            double v = 0.0;
+            swarm.setParticleXV(i, j, x, v);
         }
         evaluate(i);
         updateBest(i);
@@ -172,17 +174,36 @@ void PSO::initialize() {
             swarm.setGBestValue(fitness);
             swarm.setGBestIndex(i);
         }
+
     }
+
+    Particle best = swarm.getParticleValue(swarm.getGbest());
+    printf("0 : ");
+    for (int j = 0; j < Nvariables; j++)
+        printf("%g ", best.xBest[j]);
+    printf(" = %e\n", best.pBest);
 }
 
 void PSO::evaluate(int i) {
     int index = i;
-    double fitness = 0.0;
+    // double fitness = 0.0;
 
+    // for(int k = 0 ; k < Nvariables ; k++ ) {
+    //     int x = swarm.getParticleValue(index).x[k];
+    //     fitness +=  x * x;
+    // }
+
+    double fitness = 0, temp = 0;
     for(int k = 0 ; k < Nvariables ; k++ ) {
-        int x = swarm.getParticleValue(index).x[k];
-        fitness +=  x * x;
+        for(int l = 0; l < k; l++)
+        {
+            int x = swarm.getParticleValue(index).x[l];
+            temp += x;
+        }
+        
+        fitness +=  temp * temp;
     }
+
     
     swarm.setParticleFitness(index, fitness);
 }
@@ -193,13 +214,13 @@ void PSO::evaluateSwarm() {
         nfc++;
 
         if (nfc % 5000 == 0) {
-        Particle best = swarm.getParticleValue(swarm.getGbest());
-        printf("%d : ", nfc);
-        for (int j = 0; j < Nvariables; j++)
-            printf("%f ", best.xBest[j]);
-        printf(" = %g\n", best.pBest);
-        //cout << "PSO SPHERE nfc" << nfc << " \tbestfit " << best.pBest << "\n";
-    }
+            Particle best = swarm.getParticleValue(swarm.getGbest());
+            printf("%d : ", nfc);
+            for (int j = 0; j < Nvariables; j++)
+                printf("%g ", best.xBest[j]);
+            printf(" = %g\n", best.pBest);
+            //cout << "PSO SPHERE nfc" << nfc << " \tbestfit " << best.pBest << "\n";
+        }
     }
 
     for(int n = 0; n < Nparticles; n++) {
@@ -241,18 +262,22 @@ void PSO::particleMovement() {
 
     for (n = 0; n < Nparticles ; n++) {
         Particle par = swarm.getParticleValue(n);
+        Particle bPar = swarm.getParticleValue(swarm.getGbest());
         // update velocities
         for(d = 0; d < Nvariables ; d++ ) {
             double r1 = Rand();
             double r2 = Rand();
-            par.v[d] = w * par.v[d] + c1 * r1 * (par.xBest[d] - par.x[d]) + c2 * r2 * (swarm.getParticleValue(swarm.getGbest()).x[d] - par.x[d]);
+            double newV = w * par.v[d] + c1 * r1 * (par.xBest[d] - par.x[d]) + c2 * r2 * (bPar.x[d] - par.x[d]);
+            swarm.setParticleXV(n, d, NULL, newV);
             // check v with its dimensional maxV
-            if ( swarm.getParticleValue(n).v[d] > maxV[d] ) swarm.getParticleValue(n).v[d] = maxV[d];
-            else if ( swarm.getParticleValue(n).v[d] < -maxV[d] ) swarm.getParticleValue(n).v[d] = -maxV[d];
+            if ( swarm.getParticleValue(n).v[d] > maxV[d] ) swarm.setParticleXV(n, d, NULL, maxV[d]);
+            else if ( swarm.getParticleValue(n).v[d] < -maxV[d] ) swarm.setParticleXV(n, d, NULL, -maxV[d]);
         }
         // update positions
+        Particle newPar = swarm.getParticleValue(n);
         for (d = 0; d < Nvariables ; d++) {
-            par.x[d] = par.x[d] + par.v[d];
+            //newPar.x[d] = newPar.x[d] + newPar.v[d];
+            swarm.setParticleXV(n, d, newPar.x[d] + newPar.v[d], NULL);
         }
     }
 }
