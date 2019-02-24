@@ -177,10 +177,7 @@ vector<Particle> k_means(const vector<Particle> &particles, size_t k)
     //do
     for(size_t iteration = 0; iteration < Niterations; ++iteration) 
     {
-        //if (nextE != NULL) 
-        //{
-        //    currentE = nextE;
-        //}
+        // currentE = nextE;
 
         // Find assignments.
         for (size_t particle = 0; particle < particles.size(); ++particle)
@@ -237,10 +234,25 @@ vector<Particle> k_means(const vector<Particle> &particles, size_t k)
             means[cluster].fitness = fitness;
         }
     }
-        // Compute E(t+1)
-        //nextE = quality(particles, means);
-        
-    //} while (currentE != nextE);
+
+    //     // Compute E(t+1)
+    //     nextE = 0;
+    //     double sum[k];
+    //     for (size_t particle = 0; particle < particles.size(); ++particle)
+    //     {
+    //         const auto cluster = assignments[particle];
+    //         for (size_t var = 0; var < particles[particle].x.size(); ++var)
+    //         {
+    //             sum[cluster] += square(particles[particle].x[var] - means[cluster].x[var]);
+    //         }
+    //     }
+    //     for (size_t cluster = 0; cluster < k; cluster++)
+    //     {
+    //         nextE += sum[cluster];
+    //     }
+    //     cout << nextE << endl;
+
+    // } while (currentE != nextE);
     
     return means;
 }
