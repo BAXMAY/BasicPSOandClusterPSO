@@ -38,7 +38,8 @@ int main() {
     cout << *a << endl;
     cout << __cplusplus << endl;
 
-
+    int x{0};
+    cout << x << endl;
 
     // Particle p1, p2;
     // p1.x[0] = 2;
