@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdlib>
+#include <fstream>
 #include <limits>
 using namespace std;
 
@@ -219,6 +220,11 @@ void PSO::evaluateSwarm() {
             // for (int j = 0; j < Nvariables; j++)
             //     printf("%g ", best.xBest[j]);
             printf(" = %g\n", best.pBest);
+
+            ofstream file;
+            file.open("BPSO.txt", ios::out | ios::app);
+            file << nfc << "," << best.pBest << "\n";
+            file.close();
             //cout << "PSO SPHERE nfc" << nfc << " \tbestfit " << best.pBest << "\n";
         }
     }

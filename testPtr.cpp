@@ -36,7 +36,7 @@ int main() {
     double *a = (double *)malloc(sizeof(double));
     //*a = 5;
     cout << *a << endl;
-
+    cout << __cplusplus << endl;
 
 
 
