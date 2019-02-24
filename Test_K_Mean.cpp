@@ -116,66 +116,92 @@ double square(double val)
     return val * val;
 }
 
-// double square_l2_distance(Particle first, Particle second) {
-//     return square(first.x - second.x) + square(first.y - second.y);
-// }
+double eucildean_distance(Particle first, Particle second) {
+    return square(first.x - second.x) + square(first.y - second.y);
+}
 
-// vector<Particle> k_means(const vector<Particle> &particles, size_t k)
-// {
-//     static random_device seed;
-//     static mt19937 random_number_generator(seed());
-//     uniform_int_distribution<size_t> indices(0, particles.size() - 1);
-
-//     vector<Particle> means(k); // cluster centroid particle
-//     for(auto& cluster : means)
-//     {
-//         cluster = particles[indices(random_number_generator)];
-//     }
-
-//     vector<size_t> assignments(particles.size()); // which cluster that particle belong to
-//     while( true ) //
-//     {
-//         // Find assignments.
-//         for (size_t particle = 0; particle < particles.size(); ++particle)
-//         {
-//             auto best_distance = std::numeric_limits<double>::max();
-//             size_t best_cluster = 0;
-//             for (size_t cluster = 0; cluster < k; ++cluster)
-//             {
-//                 const double distance =
-//                     squared_l2_distance(data[particle], means[cluster]); //distance
-//                 if (distance < best_distance)
-//                 {
-//                     best_distance = distance;
-//                     best_cluster = cluster;
-//                 }
-//             }
-//             assignments[particle] = best_cluster;
-//         }
-
-//         // Sum up and count particles for each cluster.
-//         vector<Particle> new_means(k);
-//         vector<size_t> counts(k, 0); // number of particle in cluster, use for find new mean
-//         for (size_t particle = 0; particle < particles.size(); ++particle)
-//         {
-//             const auto cluster = assignments[particle];
-//             new_means[cluster].x += particles[particle].x; //
-//             new_means[cluster].y += particles[particle].y; //
-//             counts[cluster] += 1;
-//         }
-
-//         // Divide sums by counts to get new centroids.
-//         for (size_t cluster = 0; cluster < k; ++cluster)
-//         {
-//             // Turn 0/0 into 0/1 to avoid zero division.
-//             const auto count = max<size_t>(1, counts[cluster]);
-//             means[cluster].x = new_means[cluster].x / count; //
-//             means[cluster].y = new_means[cluster].y / count; //
-//         }
-//     }
+double quality(const vector<Particle> &particles, const vector<Particle> &means)
+{
     
-//     return means;
-// }
+}
+
+vector<Particle> k_means(const vector<Particle> &particles, size_t k)
+{
+    static random_device seed;
+    static mt19937 random_number_generator(seed());
+    uniform_int_distribution<size_t> indices(0, particles.size() - 1);
+
+    vector<Particle> means(k); // cluster centroid particle
+    for(auto& cluster : means)
+    {
+        cluster = particles[indices(random_number_generator)];
+    }
+
+    
+    // Compute E(t)
+    double currentE = quality(particles, means);
+    double nextE = NULL;
+    
+    vector<size_t> assignments(particles.size()); // which cluster that particle belong to
+    do
+    {
+        if (nextE != NULL) 
+        {
+            double temp = nextE;
+            nextE = NULL;
+            currentE = temp;
+        }
+
+        // Find assignments.
+        for (size_t particle = 0; particle < particles.size(); ++particle)
+        {
+            auto best_distance = std::numeric_limits<double>::max();
+            size_t best_cluster = 0;
+            for (size_t cluster = 0; cluster < k; ++cluster)
+            {
+                const double distance = eucildean_distance(particles[particle], means[cluster]); //distance
+                if (distance < best_distance)
+                {
+                    best_distance = distance;
+                    best_cluster = cluster;
+                }
+            }
+            assignments[particle] = best_cluster;
+        }
+
+        // Sum up and count particles for each cluster.
+        vector<Particle> new_means(k);
+        vector<size_t> counts(k, 0); // number of particle in cluster, use for find new mean
+        for (size_t particle = 0; particle < particles.size(); ++particle)
+        {
+            const auto cluster = assignments[particle];
+            for(size_t var = 0; var < particles[particle].x.size(); var++)
+            {
+                new_means[cluster].x[var] += particles[particle].x[var];
+            }
+            counts[cluster] += 1;
+        }
+
+        // Divide sums by counts to get new centroids.
+        for (size_t cluster = 0; cluster < k; ++cluster)
+        {
+            // Turn 0/0 into 0/1 to avoid zero division.
+            const auto count = max<size_t>(1, counts[cluster]);
+            for(size_t var = 0; var < new_means[cluster].x.size(); var++)
+            {
+                means[cluster].x[var] += new_means[cluster].x[var] / count;
+            }
+        }
+
+        
+        // Compute E(t+1)
+        nextE = quality(particles, means);
+        
+
+    } while (currentE != nextE);
+    
+    return means;
+}
 
 int main(int argc, const char *argv[])
 {
