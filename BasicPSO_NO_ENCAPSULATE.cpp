@@ -9,6 +9,7 @@
 using namespace std;
 
 #define Nparticles  30
+#define Nvariables  30
 #define T_MAX       1000
 #define NFC_MAX     1000000
 #define W_0         0.9
@@ -16,8 +17,6 @@ using namespace std;
 #define MAX_V       2.0
 #define c1          2.0
 #define c2          2.0
-#define Nvariables  30
-#define Niterations 300
 
 #define Rand()      ((double)rand()/RAND_MAX);
 
@@ -28,27 +27,7 @@ struct Particle
     vector<double> xBest;
     double fitness;
     double pBest;
-    bool dominant = false;
 };
-
-double square(double val)
-{
-    return val * val;
-}
-
-double eucildean_distance(Particle first, Particle second) {
-    double distance = 0.0;
-
-    for(size_t i = 0; i < first.x.size(); ++i)
-    {
-        distance += square(first.x[i] - second.x[i]);
-    }
-    distance += square(first.fitness - second.fitness);
-    
-    return sqrt(distance);
-}
-
-vector<Particle> k_means(const vector<Particle> &particles, size_t k);
 
 class Swarm
 {
@@ -68,10 +47,10 @@ class Swarm
     void calculateVMax();
     void particleMovement();
     void print();
-    Swarm(/* args */);
+    Swarm();
 };
 
-Swarm::Swarm(/* args */)
+Swarm::Swarm()
 {
     P.resize(Nparticles);
     for(size_t i = 0; i < Nparticles; ++i)
@@ -97,7 +76,6 @@ void Swarm::evolution()
     
     initialize();
 
-    centroids = k_means(P, 5);
     nfc = 0;
     while(nfc < NFC_MAX) {
         calculateVMax();
@@ -127,6 +105,9 @@ void Swarm::initialize()
             gBestIndex = i;
         }
     }
+
+    printf("0 : ");
+    printf(" = %g\n", gBestValue);
 }
 
 void Swarm::evaluate(int index)
@@ -235,107 +216,7 @@ void Swarm::print()
         cout << "///////////////////////////////////////" << endl;
     }
     
-}
-
-vector<Particle> k_means(const vector<Particle> &particles, size_t k)
-{
-    static random_device seed;
-    static mt19937 random_number_generator(seed());
-    uniform_int_distribution<size_t> indices(0, particles.size() - 1);
-
-    vector<Particle> means(k); // cluster centroid particle
-    for(auto& cluster : means)
-    {
-        cluster = particles[indices(random_number_generator)];
-    }
-
-    // Compute E(t)
-    // double currentE;
-    // double nextE = NULL;    
-    
-    vector<size_t> assignments(particles.size()); // which cluster that particle belong to
-    //do
-    for(size_t iteration = 0; iteration < Niterations; ++iteration) 
-    {
-        // currentE = nextE;
-
-        // Find assignments.
-        for (size_t particle = 0; particle < particles.size(); ++particle)
-        {
-            auto best_distance = std::numeric_limits<double>::max();
-            size_t best_cluster = 0;
-            for (size_t cluster = 0; cluster < k; ++cluster)
-            {
-                const double distance = eucildean_distance(particles[particle], means[cluster]); //distance
-                if (distance < best_distance)
-                {
-                    best_distance = distance;
-                    best_cluster = cluster;
-                }
-            }
-            assignments[particle] = best_cluster;
-        }
-
-        // Sum up and count particles for each cluster.
-        vector<Particle> new_means(k);
-        for (size_t i = 0; i < k; ++i)
-        {
-            new_means[i].x.resize(Nvariables);
-            new_means[i].v.resize(Nvariables);
-            new_means[i].xBest.resize(Nvariables);
-        }
-        vector<size_t> counts(k, 0); // number of particle in cluster, use for find new mean
-        for (size_t particle = 0; particle < particles.size(); ++particle)
-        {
-            const auto cluster = assignments[particle];
-            for(size_t var = 0; var < particles[particle].x.size(); ++var)
-            {
-                new_means[cluster].x[var] += particles[particle].x[var];
-            }
-            counts[cluster] += 1;
-        }
-
-        // Divide sums by counts to get new centroids.
-        for (size_t cluster = 0; cluster < k; ++cluster)
-        {
-            double fitness = 0, sum = 0;
-            // Turn 0/0 into 0/1 to avoid zero division.
-            const auto count = max<size_t>(1, counts[cluster]);
-            for(size_t var = 0; var < new_means[cluster].x.size(); ++var)
-            {
-                means[cluster].x[var] += new_means[cluster].x[var] / count;
-                // Compute New Centroid fitness
-                for (int j = 0; j < var; ++j)
-                {
-                    sum += means[cluster].x[j];
-                }
-                fitness += sum * sum;
-            }
-            means[cluster].fitness = fitness;
-        }
-    }
-
-    //     // Compute E(t+1)
-    //     nextE = 0;
-    //     double sum[k];
-    //     for (size_t particle = 0; particle < particles.size(); ++particle)
-    //     {
-    //         const auto cluster = assignments[particle];
-    //         for (size_t var = 0; var < particles[particle].x.size(); ++var)
-    //         {
-    //             sum[cluster] += square(particles[particle].x[var] - means[cluster].x[var]);
-    //         }
-    //     }
-    //     for (size_t cluster = 0; cluster < k; cluster++)
-    //     {
-    //         nextE += sum[cluster];
-    //     }
-    //     cout << nextE << endl;
-
-    // } while (currentE != nextE);
-    
-    return means;
-}
+}     
 
 int main(int argc, const char *argv[])
 {
