@@ -8,7 +8,9 @@
 
 using namespace std;
 
+#define Niterations 100
 #define Nparticles  30
+#define Nvariables  30
 #define T_MAX       1000
 #define NFC_MAX     1000000
 #define W_0         0.9
@@ -16,8 +18,7 @@ using namespace std;
 #define MAX_V       2.0
 #define c1          2.0
 #define c2          2.0
-#define Nvariables  30
-#define Niterations 300
+#define K           5
 
 #define Rand()      ((double)rand()/RAND_MAX);
 
@@ -28,8 +29,12 @@ struct Particle
     vector<double> xBest;
     double fitness;
     double pBest;
-    bool dominant = false;
 };
+
+int randomParticle()
+{
+    return rand() % Nparticles;
+}
 
 double square(double val)
 {
@@ -48,41 +53,39 @@ double eucildean_distance(Particle first, Particle second) {
     return sqrt(distance);
 }
 
-vector<Particle> k_means(const vector<Particle> &particles, size_t k);
+vector<size_t> k_means(const vector<Particle> &particles, size_t k);
 
 class Swarm
 {
   public:
     vector<Particle> P;
-    vector<Particle> centroids;
-    int gBestIndex; 
-    double gBestValue;
-    double w;
+    vector<Particle> candidates;
+    vector<size_t> cluster;
     int nfc;
-    double maxV[Nvariables];
+    int gBestIndex; 
+    int dominants[K];
+    double w;
+    double gBestValue;    
+    double maxV[Nvariables];    
     void initialize();
     void evolution();
     void evaluate(int index);
-    void evaluateSwarm();
+    void evaluateSwarm(int clusIndex);
     void updateBest(int index);
+    void updateGBest();
     void calculateVMax();
-    void particleMovement();
+    void particleMovement(int clusIndex);
+    void chooseDominant(int clusIndex);
+    void spsa(int clusIndex);
     void print();
-    Swarm(/* args */);
+    Swarm();
 };
 
-Swarm::Swarm(/* args */)
+Swarm::Swarm()
 {
+    candidates.resize(K);
     P.resize(Nparticles);
     for(size_t i = 0; i < Nparticles; ++i)
-    {
-        P[i].x.resize(Nvariables);
-        P[i].v.resize(Nvariables); 
-        P[i].xBest.resize(Nvariables);         
-    }
-
-    centroids.reserve(5);
-    for(size_t i = 0; i < 5; ++i)
     {
         P[i].x.resize(Nvariables);
         P[i].v.resize(Nvariables); 
@@ -97,14 +100,40 @@ void Swarm::evolution()
     
     initialize();
 
-    centroids = k_means(P, 5);
     nfc = 0;
     while(nfc < NFC_MAX) {
-        calculateVMax();
-        particleMovement();  
-        evaluateSwarm();
-        w -= dw;     
+        cluster = k_means(P, K);
+        for(size_t c = 0; c < K; ++c)
+        {
+            chooseDominant(c);
+            spsa(c);
+            calculateVMax();
+            particleMovement(c);  
+            evaluateSwarm(c); 
+        }    
+        updateGBest();
+        w -= dw;
     }
+}
+
+void Swarm::chooseDominant(int clusIndex)
+{
+    int max = NULL;
+    for(int i = 0; i < Nparticles; ++i)
+    {
+        if(max == NULL && cluster[i] == clusIndex) max = i;
+        else if(P[i].fitness > P[max].fitness && cluster[i] == clusIndex) max = i;
+    }
+    dominants[clusIndex] = max;
+}
+
+void Swarm::spsa(int clusIndex)
+{
+    int domIndex = dominants[clusIndex];
+    // Execute SPSA ALGORITHM
+    // P[domIndex] = 
+
+    //nfc++;
 }
 
 void Swarm::initialize() 
@@ -127,6 +156,14 @@ void Swarm::initialize()
             gBestIndex = i;
         }
     }
+
+    for(int i = 0; i < K; ++i)
+    {
+        candidates[i] = P[randomParticle()];
+    }
+
+    printf("0 : ");
+    printf(" = %g\n", gBestValue);
 }
 
 void Swarm::evaluate(int index)
@@ -144,64 +181,90 @@ void Swarm::evaluate(int index)
     P[index].fitness = fitness;
 }
 
-void Swarm::calculateVMax() {
+void Swarm::calculateVMax() 
+{
     double xmin[Nparticles], xmax[Nparticles];
 
-    for (int d = 0; d < Nvariables; d++) {
+    for (int d = 0; d < Nvariables; d++) 
+    {
         xmin[d] = xmax[d] = P[0].x[d];
-        for (int n = 1; n < Nparticles; n++) {
+        for (int n = 1; n < Nparticles; n++) 
+        {
             double pos = P[n].x[d];
-            if (pos < xmin[d])
-                xmin[d] = pos;
-            if (pos > xmax[d])
-                xmax[d] = pos;
+            if (pos < xmin[d]) xmin[d] = pos;
+            if (pos > xmax[d]) xmax[d] = pos;
         }
         maxV[d] = xmax[d] - xmin[d];
     }
 }
 
-void Swarm::particleMovement() {
-    int n, d;
-
-    for (n = 0; n < Nparticles ; n++) {
-        Particle par = P[n];
-        Particle bPar = P[gBestIndex];
+void Swarm::particleMovement(int clusIndex)
+{
+    for (int n = 0; n < Nparticles; n++)
+    {
         // update velocities
-        for(d = 0; d < Nvariables ; d++ ) {
-            double r1 = Rand();
-            double r2 = Rand();
-            P[n].v[d] = w * par.v[d] + c1 * r1 * (P[n].xBest[d] - P[n].x[d]) + c2 * r2 * (P[gBestIndex].x[d] - P[n].x[d]);
-            // check v with its dimensional maxV
-            if ( P[n].v[d] > maxV[d] ) P[n].v[d] = maxV[d];
-            else if ( P[n].v[d] < -maxV[d] ) P[n].v[d] = -maxV[d];
-        }
-        // update positions
-        for (d = 0; d < Nvariables ; d++) {
-            P[n].x[d] += P[n].v[d];
+        if (cluster[n] == clusIndex && n != dominants[clusIndex])
+        {
+            for (int d = 0; d < Nvariables; d++)
+            {
+                double r1 = Rand();
+                double r2 = Rand();
+                double sk = Rand();
+                P[n].v[d] = w * P[n].v[d] 
+                        + c1 * r1 * (P[n].xBest[d] - P[n].x[d]) 
+                        + c2 * r2 * (P[gBestIndex].x[d] - P[n].x[d]) 
+                        + sk * (P[dominants[clusIndex]].x[d] - P[n].x[d]);
+                // check v with its dimensional maxV
+                if (P[n].v[d] > maxV[d])
+                    P[n].v[d] = maxV[d];
+                else if (P[n].v[d] < -maxV[d])
+                    P[n].v[d] = -maxV[d];
+            }
+            // update positions
+            for (int d = 0; d < Nvariables; d++)
+            {
+                P[n].x[d] += P[n].v[d];
+            }
         }
     }
 }
 
-void Swarm::evaluateSwarm() {
+void Swarm::evaluateSwarm(int clusIndex) 
+{
     for(int i = 0; i < Nparticles; i++) {
-        evaluate(i);    
-        nfc++;
+        if(cluster[i] == clusIndex) // i != dominants[clusIndex]
+        {
+            evaluate(i);    
+            nfc++;
 
-        if (nfc % 5000 == 0) {
-            Particle best = P[gBestIndex];
-            printf("%d : ", nfc);
-            printf(" = %g\n", best.pBest);
-        }
+            if (nfc % 5000 == 0) 
+            {
+                Particle best = P[gBestIndex];
+                printf("%d : ", nfc);
+                printf(" = %g\n", best.pBest);
+            }
+        }       
     }
 
     for(int n = 0; n < Nparticles; n++) {
-        if (P[n].fitness < P[n].pBest ) {
-            P[n].pBest =  P[n].fitness;
-            P[n].xBest =  P[n].x;
+        if(cluster[n] == clusIndex) // n != dominants[clusIndex]
+        {
+            if (P[n].fitness < P[n].pBest)
+            {
+                P[n].pBest = P[n].fitness;
+                P[n].xBest = P[n].x;
 
-            if (P[n].fitness < gBestValue) {
-                gBestIndex = n;
-                gBestValue = P[n].fitness;
+                // if (P[n].fitness < gBestValue)
+                // {
+                //     gBestIndex = n;
+                //     gBestValue = P[n].fitness;
+                // }
+
+                if (P[n].fitness < P[dominants[clusIndex]].fitness && P[n].fitness < candidates[clusIndex].fitness)
+                {
+                    dominants[clusIndex] = n;
+                    candidates[clusIndex] = P[n];
+                }
             }
         }
     }
@@ -211,6 +274,20 @@ void Swarm::updateBest(int index)
 {
     P[index].xBest = P[index].x;
     P[index].pBest = P[index].fitness;
+}
+
+void Swarm::updateGBest()
+{
+    gBestValue = candidates[0].fitness;
+    gBestIndex = dominants[0];
+    for(int i = 1; i < K; ++i)
+    {
+        if(candidates[i].fitness < gBestValue)
+        {
+            gBestValue = candidates[i].fitness;
+            gBestIndex = dominants[i];
+        }
+    }
 }
 
 void Swarm::print()
@@ -223,25 +300,14 @@ void Swarm::print()
             cout << "P" << i << " X" << j << " : " << P[i].x[j] << endl;
         }
         cout << "///////////////////////////////////////\n" << endl;
-    }
-
-    for(size_t i = 0; i < 5; ++i)
-    {
-        for(size_t j = 0; j < Nvariables; ++j)
-        {
-            cout << "Cluster" << i << " Var" << j << " : " << centroids[i].x[j] << endl;
-        }
-        cout << "Cluster" << i << " fitness" << " : " << centroids[i].fitness << endl;
-        cout << "///////////////////////////////////////" << endl;
-    }
-    
+    }    
 }
 
-vector<Particle> k_means(const vector<Particle> &particles, size_t k)
+vector<size_t> k_means(const vector<Particle> &particles, size_t k)
 {
     static random_device seed;
     static mt19937 random_number_generator(seed());
-    uniform_int_distribution<size_t> indices(0, particles.size() - 1);
+    uniform_int_distribution<size_t> indices(0, Nparticles - 1);
 
     vector<Particle> means(k); // cluster centroid particle
     for(auto& cluster : means)
@@ -334,13 +400,13 @@ vector<Particle> k_means(const vector<Particle> &particles, size_t k)
 
     // } while (currentE != nextE);
     
-    return means;
+    return assignments;
 }
 
 int main(int argc, const char *argv[])
 {
     Swarm sw;
-    sw.evolution();
+    //sw.evolution();
     //sw.print();
     return 0;
 }
