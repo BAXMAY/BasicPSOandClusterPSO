@@ -30,6 +30,23 @@ struct Particle
     double pBest;
 };
 
+double square(double val)
+{
+    return val * val;
+}
+
+double eucildean_distance(Particle first, Particle second) {
+    double distance = 0.0;
+
+    for(size_t i = 0; i < first.x.size(); ++i)
+    {
+        distance += square(first.x[i] - second.x[i]);
+    }
+    distance += square(first.fitness - second.fitness);
+    
+    return sqrt(distance);
+}
+
 vector<Particle> k_means(const vector<Particle> &particles, size_t k);
 
 class Swarm
@@ -40,9 +57,15 @@ class Swarm
     int gBestIndex; 
     double gBestValue;
     double w;
+    int nfc;
+    double maxV[Nvariables];
     void initialize();
+    void evolution();
     void evaluate(int index);
+    void evaluateSwarm();
     void updateBest(int index);
+    void calculateVMax();
+    void particleMovement();
     void print();
     Swarm(/* args */);
 };
@@ -64,13 +87,23 @@ Swarm::Swarm(/* args */)
         P[i].v.resize(Nvariables); 
         P[i].xBest.resize(Nvariables);         
     }
-    
+}
+
+void Swarm::evolution() 
+{
     double dw = (W_0 - W_T) / (NFC_MAX / Nparticles);
     w = W_0;
     
     initialize();
 
     centroids = k_means(P, 5);
+    nfc = 0;
+    while(nfc < NFC_MAX) {
+        calculateVMax();
+        particleMovement();  
+        evaluateSwarm();
+        w -= dw;     
+    }
 }
 
 void Swarm::initialize() 
@@ -110,6 +143,69 @@ void Swarm::evaluate(int index)
     P[index].fitness = fitness;
 }
 
+void Swarm::calculateVMax() {
+    double xmin[Nparticles], xmax[Nparticles];
+
+    for (int d = 0; d < Nvariables; d++) {
+        xmin[d] = xmax[d] = P[0].x[d];
+        for (int n = 1; n < Nparticles; n++) {
+            double pos = P[n].x[d];
+            if (pos < xmin[d])
+                xmin[d] = pos;
+            if (pos > xmax[d])
+                xmax[d] = pos;
+        }
+        maxV[d] = xmax[d] - xmin[d];
+    }
+}
+
+void Swarm::particleMovement() {
+    int n, d;
+
+    for (n = 0; n < Nparticles ; n++) {
+        Particle par = P[n];
+        Particle bPar = P[gBestIndex];
+        // update velocities
+        for(d = 0; d < Nvariables ; d++ ) {
+            double r1 = Rand();
+            double r2 = Rand();
+            P[n].v[d] = w * par.v[d] + c1 * r1 * (P[n].xBest[d] - P[n].x[d]) + c2 * r2 * (P[gBestIndex].x[d] - P[n].x[d]);
+            // check v with its dimensional maxV
+            if ( P[n].v[d] > maxV[d] ) P[n].v[d] = maxV[d];
+            else if ( P[n].v[d] < -maxV[d] ) P[n].v[d] = -maxV[d];
+        }
+        // update positions
+        for (d = 0; d < Nvariables ; d++) {
+            P[n].x[d] += P[n].v[d];
+        }
+    }
+}
+
+void Swarm::evaluateSwarm() {
+    for(int i = 0; i < Nparticles; i++) {
+        evaluate(i);    
+        nfc++;
+
+        if (nfc % 5000 == 0) {
+            Particle best = P[gBestIndex];
+            printf("%d : ", nfc);
+            printf(" = %g\n", best.pBest);
+        }
+    }
+
+    for(int n = 0; n < Nparticles; n++) {
+        if (P[n].fitness < P[n].pBest ) {
+            P[n].pBest =  P[n].fitness;
+            P[n].xBest =  P[n].x;
+
+            if (P[n].fitness < gBestValue) {
+                gBestIndex = n;
+                gBestValue = P[n].fitness;
+            }
+        }
+    }
+}
+
 void Swarm::updateBest(int index)
 {
     P[index].xBest = P[index].x;
@@ -138,23 +234,6 @@ void Swarm::print()
         cout << "///////////////////////////////////////" << endl;
     }
     
-}
-
-double square(double val)
-{
-    return val * val;
-}
-
-double eucildean_distance(Particle first, Particle second) {
-    double distance = 0.0;
-
-    for(size_t i = 0; i < first.x.size(); ++i)
-    {
-        distance += square(first.x[i] - second.x[i]);
-    }
-    distance += square(first.fitness - second.fitness);
-    
-    return sqrt(distance);
 }
 
 vector<Particle> k_means(const vector<Particle> &particles, size_t k)
