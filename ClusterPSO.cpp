@@ -130,9 +130,26 @@ void Swarm::chooseDominant(int clusIndex)
 void Swarm::spsa(int clusIndex)
 {
     int domIndex = dominants[clusIndex];
+    
+    double a = 1, c = 1, A = 1, alpha = 1, gamma = 1/6;
+    vector<double> ghat;
     // Execute SPSA ALGORITHM
-    // P[domIndex] = 
-
+    for(int k = 1; k <= 100; ++i)
+    {
+        // bernoulli deltaK
+        
+        // ak and ck
+        
+        // evaluate positive
+        
+        // evaluate negative
+        
+        // calculate ghat
+        
+        // P[domIndex].x -= ghat; 
+        
+        // evaluate new x and record pbest
+    }
     //nfc++;
 }
 
