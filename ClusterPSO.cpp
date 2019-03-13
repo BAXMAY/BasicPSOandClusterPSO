@@ -69,6 +69,7 @@ class Swarm
     double maxV[Nvariables];    
     void initialize();
     void evolution();
+    double fitness(vector<double> x);
     void evaluate(int index);
     void evaluateSwarm(int clusIndex);
     void updateBest(int index);
@@ -134,21 +135,60 @@ void Swarm::spsa(int clusIndex)
     double a = 1, c = 1, A = 1, alpha = 1, gamma = 1/6;
     vector<double> ghat;
     // Execute SPSA ALGORITHM
-    for(int k = 1; k <= 100; ++i)
+    for(int k = 1; k <= 100; ++k)
     {
         // bernoulli deltaK
+        std::default_random_engine generator;
+        std::bernoulli_distribution distribution(0.5);
+        vector<double> ghat; // deltaK
+        ghat.resize(Nvariables);
+        for (int i = 0; i < Nvariables; ++i) {
+            if (distribution(generator)) ghat[i] = 1;
+            else ghat[i] = -1;
+        } 
         
         // ak and ck
+        double ak = a / pow(A + k, alpha);
+        double ck = c / pow(k, gamma);
         
         // evaluate positive
-        
+        vector<double> pos;
+        pos.resize(Nvariables);
+        for(int i = 0; i < Nvariables; ++i)
+        {
+            pos[i] = P[domIndex].x[i] + (ck * ghat[i]);
+        }
+        double positive = fitness(pos);
+
         // evaluate negative
-        
+        vector<double> neg;
+        neg.resize(Nvariables);
+        for(int i = 0; i < Nvariables; ++i)
+        {
+            neg[i] = P[domIndex].x[i] - (ck * ghat[i]);
+        }
+        double negative = fitness(neg);
+
         // calculate ghat
+        double coff = (positive - negative) / (2 * ck);
+        for(int i = 0; i < Nvariables; ++i)
+        {
+            ghat[i] = coff / ghat[i];
+        }
         
         // P[domIndex].x -= ghat; 
+        for(int i = 0; i < Nvariables; ++i)
+        {
+            P[domIndex].x[i] -= ak * ghat[i];
+        }
         
         // evaluate new x and record pbest
+        evaluate(domIndex);
+        if (P[domIndex].fitness < P[domIndex].pBest)
+        {
+            P[domIndex].pBest = P[domIndex].fitness;
+            P[domIndex].xBest = P[domIndex].x;
+        }
     }
     //nfc++;
 }
@@ -185,17 +225,22 @@ void Swarm::initialize()
 
 void Swarm::evaluate(int index)
 {   
-    double fitness = 0, temp = 0;
+    P[index].fitness = fitness(P[index].x);
+}
+
+double Swarm::fitness(vector<double> x)
+{
+    double fit = 0, temp = 0;
     for(int i = 0 ; i < Nvariables ; ++i ) 
     {
         for(int j = 0; j < i; ++j)
         {
-            temp += P[index].x[j];
+            temp += x[j];
         }      
-        fitness +=  temp * temp;
+        fit +=  temp * temp;
     }
 
-    P[index].fitness = fitness;
+    return fit;
 }
 
 void Swarm::calculateVMax() 
