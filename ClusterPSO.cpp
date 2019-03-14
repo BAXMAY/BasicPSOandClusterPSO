@@ -8,11 +8,11 @@
 
 using namespace std;
 
-#define Niterations 100
+#define Niterations 300
 #define Nparticles  30
-#define Nvariables  30
+#define Nvariables  3
 #define T_MAX       1000
-#define NFC_MAX     1000000
+#define NFC_MAX     100000
 #define W_0         0.9
 #define W_T         0.4
 #define MAX_V       2.0
@@ -119,13 +119,13 @@ void Swarm::evolution()
 
 void Swarm::chooseDominant(int clusIndex)
 {
-    int max = NULL;
+    int min = NULL;
     for(int i = 0; i < Nparticles; ++i)
     {
-        if(max == NULL && cluster[i] == clusIndex) max = i;
-        else if(P[i].fitness > P[max].fitness && cluster[i] == clusIndex) max = i;
+        if(min == NULL && cluster[i] == clusIndex) min = i;
+        else if(P[i].fitness < P[min].fitness && cluster[i] == clusIndex) min = i;
     }
-    dominants[clusIndex] = max;
+    dominants[clusIndex] = min;
 }
 
 void Swarm::spsa(int clusIndex)
@@ -301,9 +301,13 @@ void Swarm::evaluateSwarm(int clusIndex)
 
             if (nfc % 5000 == 0) 
             {
-                Particle best = P[gBestIndex];
                 printf("%d : ", nfc);
-                printf(" = %g\n", best.pBest);
+                printf(" = %g\n", gBestValue);
+
+                ofstream file;
+                file.open("ClusterPSO.txt", ios::out | ios::app);
+                file << nfc << "," << gBestValue << "\n";
+                file.close();
             }
         }       
     }
@@ -468,7 +472,7 @@ vector<size_t> k_means(const vector<Particle> &particles, size_t k)
 int main(int argc, const char *argv[])
 {
     Swarm sw;
-    //sw.evolution();
+    sw.evolution();
     //sw.print();
     return 0;
 }

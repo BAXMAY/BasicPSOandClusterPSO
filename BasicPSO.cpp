@@ -213,24 +213,24 @@ void PSO::initialize()
 void PSO::evaluate(int i)
 {
     int index = i;
-    // double fitness = 0.0;
+    double fitness = 0.0;
 
-    // for(int k = 0 ; k < Nvariables ; k++ ) {
-    //     int x = swarm.getParticleValue(index).x[k];
-    //     fitness +=  x * x;
-    // }
-
-    double fitness = 0, temp = 0;
-    for (int k = 0; k < Nvariables; k++)
-    {
-        for (int l = 0; l < k; l++)
-        {
-            double x = swarm.getParticleValue(index).x[l];
-            temp += x;
-        }
-
-        fitness += temp * temp;
+    for(int k = 0 ; k < Nvariables ; k++ ) {
+        int x = swarm.getParticleValue(index).x[k];
+        fitness +=  x * x;
     }
+
+    // double fitness = 0, temp = 0;
+    // for (int k = 0; k < Nvariables; k++)
+    // {
+    //     for (int l = 0; l < k; l++)
+    //     {
+    //         double x = swarm.getParticleValue(index).x[l];
+    //         temp += x;
+    //     }
+
+    //     fitness += temp * temp;
+    // }
 
     swarm.setParticleFitness(index, fitness);
 }
