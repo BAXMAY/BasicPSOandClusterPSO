@@ -5,6 +5,7 @@
 #include <limits>
 #include <random>
 #include <vector>
+#include <ctime>
 
 using namespace std;
 
@@ -220,6 +221,7 @@ void Swarm::print()
 
 int main(int argc, const char *argv[])
 {
+    srand(time(0));
     Swarm sw;
     sw.evolution();
     //sw.print();
