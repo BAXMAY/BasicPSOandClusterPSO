@@ -42,6 +42,7 @@ class Swarm
     double maxV[Nvariables];
     void initialize();
     void evolution();
+    double fitness(vector<double> x);
     void evaluate(int index);
     void evaluateSwarm();
     void updateBest(int index);
@@ -113,17 +114,22 @@ void Swarm::initialize()
 
 void Swarm::evaluate(int index)
 {   
-    double fitness = 0, temp = 0;
+    P[index].fitness = fitness(P[index].x);
+}
+
+double Swarm::fitness(vector<double> x)
+{
+    double fit = 0, temp = 0;
     for(int i = 0 ; i < Nvariables ; ++i ) 
     {
         for(int j = 0; j < i; ++j)
         {
-            temp += P[index].x[j];
+            temp += x[j];
         }      
-        fitness +=  temp * temp;
+        fit +=  temp * temp;
     }
 
-    P[index].fitness = fitness;
+    return fit;
 }
 
 void Swarm::calculateVMax() {
