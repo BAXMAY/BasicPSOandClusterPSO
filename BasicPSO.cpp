@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <limits>
+#include <ctime>
 using namespace std;
 
 #define Nparticles 30
@@ -336,7 +337,7 @@ PSO::~PSO()
 
 int main()
 {
-
+    srand(time(0));
     PSO pso;
     pso.evolution();
 

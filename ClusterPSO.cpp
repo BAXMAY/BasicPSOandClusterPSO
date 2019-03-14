@@ -5,6 +5,7 @@
 #include <limits>
 #include <random>
 #include <vector>
+#include <ctime>
 
 using namespace std;
 
@@ -471,6 +472,7 @@ vector<size_t> k_means(const vector<Particle> &particles, size_t k)
 
 int main(int argc, const char *argv[])
 {
+    srand(time(0));
     Swarm sw;
     sw.evolution();
     //sw.print();
