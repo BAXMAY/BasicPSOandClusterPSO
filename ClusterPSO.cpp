@@ -414,7 +414,6 @@ vector<size_t> Swarm::k_means(const vector<Particle> &particles, size_t k)
     {
         int center = (int) Nparticles * Rand();
         cluster = particles[center];
-        //cout << center << endl;
     }
 
     // Compute E(t)
@@ -423,7 +422,6 @@ vector<size_t> Swarm::k_means(const vector<Particle> &particles, size_t k)
     
     vector<size_t> assignments(particles.size()); // which cluster that particle belong to
     //do
-
     for(size_t iteration = 0; iteration < Niterations; ++iteration) 
     {
         // currentE = nextE;
@@ -467,19 +465,13 @@ vector<size_t> Swarm::k_means(const vector<Particle> &particles, size_t k)
         // Divide sums by counts to get new centroids.
         for (size_t cluster = 0; cluster < k; ++cluster)
         {
-            //double fitness = 0, sum = 0;
             // Turn 0/0 into 0/1 to avoid zero division.
             const auto count = max<size_t>(1, counts[cluster]);
             for(size_t var = 0; var < new_means[cluster].x.size(); ++var)
             {
                 means[cluster].x[var] += new_means[cluster].x[var] / count;
-                // Compute New Centroid fitness
-                // for (int j = 0; j < var; ++j)
-                // {
-                //     sum += means[cluster].x[j];
-                // }
-                // fitness += sum * sum;
             }
+            // Compute New Centroid fitness
             means[cluster].fitness = fitness(means[cluster].x);
         }
     }
