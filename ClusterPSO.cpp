@@ -211,6 +211,8 @@ void Swarm::spsa(int clusIndex)
         {
             P[domIndex].pBest = P[domIndex].fitness;
             P[domIndex].xBest = P[domIndex].x;
+            dominants[clusIndex] = domIndex;
+            candidates[clusIndex] = P[domIndex];
         }
     }
     //nfc++;
@@ -225,7 +227,7 @@ void Swarm::initialize()
     {
         for(int j = 0; j < Nvariables; ++j) 
         {
-            P[i].x[j] = -5.12 + 10.24 * Rand();
+            P[i].x[j] = -100 + (100 - (-100)) * Rand();
             P[i].v[j] = 0.0;
         }
         evaluate(i);
@@ -259,14 +261,10 @@ void Swarm::evaluate(int index)
 
 double Swarm::fitness(vector<double> x)
 {
-    double fit = 0, temp = 0;
-    for(int i = 0 ; i < Nvariables ; ++i ) 
-    {
-        for(int j = 0; j < i; ++j)
-        {
-            temp += x[j];
-        }      
-        fit +=  temp * temp;
+    double fit = 0.0;
+
+    for(int k = 0 ; k < Nvariables ; k++ ) {
+        fit +=  x[k] * x[k];
     }
 
     return fit;
@@ -294,17 +292,17 @@ void Swarm::particleMovement(int clusIndex)
     for (int n = 0; n < Nparticles; n++)
     {
         // update velocities
-        if (cluster[n] == clusIndex && n != dominants[clusIndex])
-        {
+        //if (cluster[n] == clusIndex && n != dominants[clusIndex])
+        //{
             //cout << n << endl;
             for (int d = 0; d < Nvariables; d++)
             {
                 double r1 = Rand();
                 double r2 = Rand();
-                double sk = rand();
+                double sk = Rand();
                 P[n].v[d] = w * P[n].v[d] 
                         + c1 * r1 * (P[n].xBest[d] - P[n].x[d]) 
-                        + c2 * r2 * (P[gBestIndex].x[d] - P[n].x[d]) 
+                        + c2 * r2 * (P[gBestIndex].x[d] - P[n].x[d]); 
                         + sk * (P[n].x[d] - P[dominants[clusIndex]].x[d]);
                 // check v with its dimensional maxV
                 if (P[n].v[d] > maxV[d])
@@ -320,7 +318,7 @@ void Swarm::particleMovement(int clusIndex)
                 //cout << P[n].x[d] << " ";
             }
             //cout << "\n";
-        }
+        //}
     }
     //cout << "\n";
 }
