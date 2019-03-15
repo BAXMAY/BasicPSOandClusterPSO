@@ -12,7 +12,7 @@ using namespace std;
 #define Nparticles  30
 #define Nvariables  30
 #define T_MAX       1000
-#define NFC_MAX     1000000
+#define NFC_MAX     100000
 #define W_0         0.72894
 #define W_T         0.4
 #define MAX_V       2.0
@@ -22,6 +22,7 @@ using namespace std;
 #define Rand()      ((double)rand()/RAND_MAX);
 
 int probNo;
+double plot[(NFC_MAX/5000) + 1];
 
 double sphere(vector<double> x) 
 {
@@ -223,11 +224,6 @@ void Swarm::evolution()
         evaluateSwarm();
         w -= dw;     
     }
-
-    ofstream file;
-    file.open("BPSO.txt", ios::out | ios::app);
-    file << "===========================================" << "\n\n";
-    file.close();
 }
 
 double Swarm::randx()
@@ -287,10 +283,12 @@ void Swarm::initialize()
     printf("0 : ");
     printf(" = %g\n", gBestValue);
 
-    ofstream file;
-    file.open("BPSO.txt", ios::out | ios::app);
-    file << "0," << gBestValue<< "\n";
-    file.close();
+    // ofstream file;
+    // file.open("BPSO.txt", ios::out | ios::app);
+    // file << "0," << gBestValue<< "\n";
+    // file.close();
+
+    ::plot[0] += gBestValue;
 }
 
 void Swarm::evaluate(int index)
@@ -380,10 +378,11 @@ void Swarm::evaluateSwarm() {
             printf("%d : ", nfc);
             printf(" = %g\n", best.pBest);
 
-            ofstream file;
-            file.open("BPSO.txt", ios::out | ios::app);
-            file << nfc << "," << best.pBest << "\n";
-            file.close();
+            ::plot[nfc / 5000] += gBestValue;
+            // ofstream file;
+            // file.open("BPSO.txt", ios::out | ios::app);
+            // file << best.pBest << "\n";
+            // file.close();
         }
     }
 
@@ -435,18 +434,32 @@ int main(int argc, const char *argv[])
     char probName[8][14] = {"Sphere", "Schwefel", "Rosenbrock", "QuarticNoise", "Ackley", "Griewank", "Rastrigin", "Penalized"};
     for(::probNo = 0; ::probNo < 8; ::probNo++)
     {
-        ofstream file;
-        file.open("BPSO.txt", ios::out | ios::app);
-        file << probName[::probNo] << "\n";
-        file << "#####################################" << "\n\n";
-        file.close();
+        
         cout << probName[::probNo] << "\n\n";
+
+        for(int i = 0; i <= NFC_MAX/5000; i++)
+        {
+            ::plot[i] = 0;
+        }
+        
+
         for (int i = 0; i < 10; i++)
         {
             srand(time(0));
             Swarm sw;
             sw.evolution();
         }
+
+        ofstream file;
+        file.open("BPSO.txt", ios::out | ios::app);
+        file << probName[::probNo] << "\n";
+        file << "#####################################" << "\n\n";
+        for(int i = 0; i <= NFC_MAX/5000; i++)
+        {
+            file << plot[i]/10 << "\n";
+        }
+        file << "\n";
+        file.close();
     }
     
     //sw.print();
