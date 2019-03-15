@@ -14,6 +14,7 @@ using namespace std;
 
 double sphere(vector<double> x) 
 {
+    // -100 + (100 - (-100)) * Rand();
     double fit = 0.0;
 
     for(int k = 0 ; k < Nvariables ; k++ ) {
@@ -25,6 +26,7 @@ double sphere(vector<double> x)
 
 double schwefel(vector<double> x)
 {
+    // -5.12 + (5.12 - (-5.12)) * Rand();
     double fit = 0, temp = 0;
 
     for(int i = 0 ; i < Nvariables ; ++i ) 
@@ -41,6 +43,7 @@ double schwefel(vector<double> x)
 
 double rosenbrock(vector<double> x)
 {
+    // -30 + (30 - (-30)) * Rand();
     double fit = 0;
     
     for(int i = 0 ; i < Nvariables - 1 ; ++i ) 
@@ -53,6 +56,7 @@ double rosenbrock(vector<double> x)
 
 double quarticNoise(vector<double> x)
 {
+    // -1.28 + (1.28 - (-1.28)) * Rand();
     double fit = 0;
     
     for(int i = 0 ; i < Nvariables ; ++i ) 
@@ -65,6 +69,7 @@ double quarticNoise(vector<double> x)
 
 double ackley(vector<double> x)
 {
+    // -32 + (32 - (-32)) * Rand();
     double fit = 0, sum1 = 0, sum2 = 0;
     
     for(int i = 0 ; i < Nvariables ; ++i ) 
@@ -82,6 +87,7 @@ double ackley(vector<double> x)
 
 double griewank(vector<double> x)
 {
+    // -600 + (600 - (-600)) * Rand();
     double fit = 0, sum = 0, mul = 1;
     
     for(int i = 0 ; i < Nvariables ; ++i ) 
@@ -97,6 +103,7 @@ double griewank(vector<double> x)
 
 double rastrigin(vector<double> x)
 {
+    // -5.12 + (5.12 - (-5.12)) * Rand();
     double fit = 0, temp = 0;
     
     for(int i = 0 ; i < Nvariables ; ++i ) 
@@ -109,6 +116,7 @@ double rastrigin(vector<double> x)
 
 double penalized(vector<double> x)
 {
+    // -50 + (50 - (-50)) * Rand();
     vector<double> y;
     y.resize(Nvariables);
     double fit = 0;

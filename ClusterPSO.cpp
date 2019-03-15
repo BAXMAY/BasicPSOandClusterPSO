@@ -9,16 +9,16 @@
 
 using namespace std;
 
-#define Niterations 300
-#define Nparticles  30
-#define Nvariables  3
+#define Niterations 5
+#define Nparticles  40
+#define Nvariables  30
 #define T_MAX       1000
-#define NFC_MAX     100000
-#define W_0         0.9
+#define NFC_MAX     1000000
+#define W_0         0.72894
 #define W_T         0.4
 #define MAX_V       2.0
-#define c1          2.0
-#define c2          2.0
+#define c1          1.49618
+#define c2          1.49618
 #define K           5
 
 #define Rand()      ((double)rand()/RAND_MAX);
@@ -80,6 +80,7 @@ class Swarm
     void chooseDominant(int clusIndex);
     void spsa(int clusIndex);
     void print();
+    vector<size_t> k_means(const vector<Particle> &particles, size_t k);
     Swarm();
 };
 
@@ -103,27 +104,47 @@ void Swarm::evolution()
     initialize();
 
     nfc = 0;
+    // cluster = k_means(P, K);
+    // for(size_t i = 0; i < Nparticles; i++)
+    //     {
+    //         if(nfc == 0)
+    //         cout << cluster[i] << endl;
+    //     }
     while(nfc < NFC_MAX) {
         cluster = k_means(P, K);
+        // for(size_t i = 0; i < Nparticles; i++)
+        // {
+        //     if(nfc == 0)
+        //     cout << cluster[i] << endl;
+        // }
+        
         for(size_t c = 0; c < K; ++c)
         {
             chooseDominant(c);
             spsa(c);
-            calculateVMax();
-            particleMovement(c);  
-            evaluateSwarm(c); 
+            for(int i = 0; i < 50; ++i)
+            {
+                calculateVMax();
+                particleMovement(c);  
+                evaluateSwarm(c);
+            }             
         }    
         updateGBest();
         w -= dw;
     }
+
+    ofstream file;
+    file.open("ClusterPSO.txt", ios::out | ios::app);
+    file << "===========================================" << "\n\n";
+    file.close();
 }
 
 void Swarm::chooseDominant(int clusIndex)
 {
-    int min = NULL;
-    for(int i = 0; i < Nparticles; ++i)
+    int min = 0;
+    for(int i = 1; i < Nparticles; ++i)
     {
-        if(min == NULL && cluster[i] == clusIndex) min = i;
+        if(min == 0 && cluster[min] != clusIndex && cluster[i] == clusIndex) min = i;
         else if(P[i].fitness < P[min].fitness && cluster[i] == clusIndex) min = i;
     }
     dominants[clusIndex] = min;
@@ -133,10 +154,11 @@ void Swarm::spsa(int clusIndex)
 {
     int domIndex = dominants[clusIndex];
     
-    double a = 1, c = 1, A = 1, alpha = 1, gamma = 1/6;
+    //double a = 1, c = 1, A = 1, alpha = 1, gamma = 1/6;
+    double a = 1, c = 1, A = 1, alpha = 0.602, gamma = 0.101;
     vector<double> ghat;
     // Execute SPSA ALGORITHM
-    for(int k = 1; k <= 100; ++k)
+    for(int k = 1; k <= 50; ++k)
     {
         // bernoulli deltaK
         std::default_random_engine generator;
@@ -197,6 +219,7 @@ void Swarm::spsa(int clusIndex)
 void Swarm::initialize() 
 {
     gBestValue = numeric_limits<double>::max();
+    //cout << gBestValue << endl;
 
     for(int i = 0; i < Nparticles; ++i) 
     {
@@ -217,11 +240,16 @@ void Swarm::initialize()
 
     for(int i = 0; i < K; ++i)
     {
-        candidates[i] = P[randomParticle()];
+        candidates[i] = P[gBestIndex];
     }
 
     printf("0 : ");
     printf(" = %g\n", gBestValue);
+
+    ofstream file;
+    file.open("ClusterPSO.txt", ios::out | ios::app);
+    file << "0," << gBestValue<< "\n";
+    file.close();
 }
 
 void Swarm::evaluate(int index)
@@ -268,15 +296,16 @@ void Swarm::particleMovement(int clusIndex)
         // update velocities
         if (cluster[n] == clusIndex && n != dominants[clusIndex])
         {
+            //cout << n << endl;
             for (int d = 0; d < Nvariables; d++)
             {
                 double r1 = Rand();
                 double r2 = Rand();
-                double sk = Rand();
+                double sk = rand();
                 P[n].v[d] = w * P[n].v[d] 
                         + c1 * r1 * (P[n].xBest[d] - P[n].x[d]) 
                         + c2 * r2 * (P[gBestIndex].x[d] - P[n].x[d]) 
-                        + sk * (P[dominants[clusIndex]].x[d] - P[n].x[d]);
+                        + sk * (P[n].x[d] - P[dominants[clusIndex]].x[d]);
                 // check v with its dimensional maxV
                 if (P[n].v[d] > maxV[d])
                     P[n].v[d] = maxV[d];
@@ -284,12 +313,16 @@ void Swarm::particleMovement(int clusIndex)
                     P[n].v[d] = -maxV[d];
             }
             // update positions
+            //cout << n << " : ";
             for (int d = 0; d < Nvariables; d++)
             {
                 P[n].x[d] += P[n].v[d];
+                //cout << P[n].x[d] << " ";
             }
+            //cout << "\n";
         }
     }
+    //cout << "\n";
 }
 
 void Swarm::evaluateSwarm(int clusIndex) 
@@ -345,13 +378,13 @@ void Swarm::updateBest(int index)
 
 void Swarm::updateGBest()
 {
-    gBestValue = candidates[0].fitness;
+    gBestValue = candidates[0].pBest;
     gBestIndex = dominants[0];
     for(int i = 1; i < K; ++i)
     {
-        if(candidates[i].fitness < gBestValue)
+        if(candidates[i].pBest < gBestValue)
         {
-            gBestValue = candidates[i].fitness;
+            gBestValue = candidates[i].pBest;
             gBestIndex = dominants[i];
         }
     }
@@ -370,7 +403,7 @@ void Swarm::print()
     }    
 }
 
-vector<size_t> k_means(const vector<Particle> &particles, size_t k)
+vector<size_t> Swarm::k_means(const vector<Particle> &particles, size_t k)
 {
     static random_device seed;
     static mt19937 random_number_generator(seed());
@@ -379,7 +412,9 @@ vector<size_t> k_means(const vector<Particle> &particles, size_t k)
     vector<Particle> means(k); // cluster centroid particle
     for(auto& cluster : means)
     {
-        cluster = particles[indices(random_number_generator)];
+        int center = (int) Nparticles * Rand();
+        cluster = particles[center];
+        //cout << center << endl;
     }
 
     // Compute E(t)
@@ -388,6 +423,7 @@ vector<size_t> k_means(const vector<Particle> &particles, size_t k)
     
     vector<size_t> assignments(particles.size()); // which cluster that particle belong to
     //do
+
     for(size_t iteration = 0; iteration < Niterations; ++iteration) 
     {
         // currentE = nextE;
@@ -431,20 +467,20 @@ vector<size_t> k_means(const vector<Particle> &particles, size_t k)
         // Divide sums by counts to get new centroids.
         for (size_t cluster = 0; cluster < k; ++cluster)
         {
-            double fitness = 0, sum = 0;
+            //double fitness = 0, sum = 0;
             // Turn 0/0 into 0/1 to avoid zero division.
             const auto count = max<size_t>(1, counts[cluster]);
             for(size_t var = 0; var < new_means[cluster].x.size(); ++var)
             {
                 means[cluster].x[var] += new_means[cluster].x[var] / count;
                 // Compute New Centroid fitness
-                for (int j = 0; j < var; ++j)
-                {
-                    sum += means[cluster].x[j];
-                }
-                fitness += sum * sum;
+                // for (int j = 0; j < var; ++j)
+                // {
+                //     sum += means[cluster].x[j];
+                // }
+                // fitness += sum * sum;
             }
-            means[cluster].fitness = fitness;
+            means[cluster].fitness = fitness(means[cluster].x);
         }
     }
 
@@ -466,7 +502,7 @@ vector<size_t> k_means(const vector<Particle> &particles, size_t k)
     //     cout << nextE << endl;
 
     // } while (currentE != nextE);
-    
+
     return assignments;
 }
 

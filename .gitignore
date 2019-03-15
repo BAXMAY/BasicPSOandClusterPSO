@@ -49,3 +49,15 @@ cmake-build-debug/CMakeFiles/BasicPSOandClusterPSO.dir/depend.internal
 cmake-build-debug/CMakeFiles/BasicPSOandClusterPSO.dir/goldsborough_k_mean.cpp.o
 cmake-build-debug/CMakeFiles/Progress/1
 cmake-build-debug/CMakeFiles/Progress/count.txt
+BPSO_Ackley.txt
+BPSO_Griewank.txt
+BPSO_Penalized.txt
+BPSO_QuarticNoise.txt
+BPSO_Rastrigin.txt
+BPSO_Rosenbrock.txt
+BPSO_Schwefel.txt
+BPSO_Sphere.txt
+BPSO.txt
+BPSO.txt
+a.out
+ClusterPSO.txt

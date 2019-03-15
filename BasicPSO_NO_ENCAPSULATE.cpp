@@ -9,15 +9,15 @@
 
 using namespace std;
 
-#define Nparticles  30
+#define Nparticles  40
 #define Nvariables  30
 #define T_MAX       1000
 #define NFC_MAX     1000000
-#define W_0         0.9
+#define W_0         0.72894
 #define W_T         0.4
 #define MAX_V       2.0
-#define c1          2.0
-#define c2          2.0
+#define c1          1.49618
+#define c2          1.49618
 
 #define Rand()      ((double)rand()/RAND_MAX);
 
@@ -85,6 +85,11 @@ void Swarm::evolution()
         evaluateSwarm();
         w -= dw;     
     }
+
+    ofstream file;
+    file.open("BPSO.txt", ios::out | ios::app);
+    file << "===========================================" << "\n\n";
+    file.close();
 }
 
 void Swarm::initialize() 
@@ -95,7 +100,7 @@ void Swarm::initialize()
     {
         for(int j = 0; j < Nvariables; ++j) 
         {
-            P[i].x[j] = -5.12 + 10.24 * Rand();
+            P[i].x[j] = -5.12 + (5.12 - (-5.12)) * Rand();
             P[i].v[j] = 0.0;
         }
         evaluate(i);
@@ -110,6 +115,11 @@ void Swarm::initialize()
 
     printf("0 : ");
     printf(" = %g\n", gBestValue);
+
+    ofstream file;
+    file.open("BPSO.txt", ios::out | ios::app);
+    file << "0," << gBestValue<< "\n";
+    file.close();
 }
 
 void Swarm::evaluate(int index)
@@ -119,7 +129,8 @@ void Swarm::evaluate(int index)
 
 double Swarm::fitness(vector<double> x)
 {
-    double fit = 0, temp = 0;
+   double fit = 0, temp = 0;
+
     for(int i = 0 ; i < Nvariables ; ++i ) 
     {
         for(int j = 0; j < i; ++j)
@@ -164,10 +175,15 @@ void Swarm::particleMovement() {
             else if ( P[n].v[d] < -maxV[d] ) P[n].v[d] = -maxV[d];
         }
         // update positions
-        for (d = 0; d < Nvariables ; d++) {
-            P[n].x[d] += P[n].v[d];
-        }
+        cout << n << " : ";
+            for (int d = 0; d < Nvariables; d++)
+            {
+                P[n].x[d] += P[n].v[d];
+                cout << P[n].x[d] << " ";
+            }
+            cout << "\n";
     }
+    cout << "\n";
 }
 
 void Swarm::evaluateSwarm() {
@@ -179,6 +195,11 @@ void Swarm::evaluateSwarm() {
             Particle best = P[gBestIndex];
             printf("%d : ", nfc);
             printf(" = %g\n", best.pBest);
+
+            ofstream file;
+            file.open("BPSO.txt", ios::out | ios::app);
+            file << nfc << "," << best.pBest << "\n";
+            file.close();
         }
     }
 
